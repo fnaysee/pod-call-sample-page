@@ -1,6 +1,6 @@
 import './index.html'
 import {auth, signOut} from "podauth";
-import Podchat from 'podchat-browser';
+import PodChat from 'podchat-browser';
 
 import Config from './scripts/Config';
 
@@ -40,7 +40,7 @@ let wantsToJoinAGroupCall = false
     , callUsersListElement = document.getElementById("call-participants-list")
     , currentCallThreadId;
 
-let chatAgent = new Podchat({
+let chatAgent = new PodChat({
     appId: 'CallTest',
     socketAddress: Config[Config.env].socketAddress,
     ssoHost: Config[Config.env].ssoHost,
@@ -61,7 +61,7 @@ let chatAgent = new Podchat({
     httpRequestTimeout: 30000,
     httpUploadRequestTimeout: 0,
     forceWaitQueueInMemory: true,
-    asyncRequestTimeout: 50000,
+    asyncRequestTimeout: 20000,
     callRequestTimeout: 15000,
     callOptions: {
         callNoAnswerTimeout: 20000,
@@ -209,10 +209,8 @@ chatAgent.on('callEvents', function (event) {
             // if(callDivs[event.metadata.userId]) {
             //     callDivs[event.metadata.userId].container.appendChild(p)
             // }
-            document.getElementById('poorconnection-' + event.metadata.elementId).remove();
-            break;
-        case 'CALL_STARTED_ELSEWHERE':
-            callState.callStartedElsewhere = true;
+            if(document.getElementById('poorconnection-' + event.metadata.elementId))
+                document.getElementById('poorconnection-' + event.metadata.elementId).remove();
             break;
         case 'RECEIVE_CALL': //code 73, 91
             /* if(callState.callStarted || callState.callStartedElsewhere) {
@@ -322,10 +320,10 @@ chatAgent.on('callEvents', function (event) {
             document.getElementById('caller-modal').style.display = 'none';
             document.getElementById('container').classList.remove('blur');
             document.getElementById('callee-modal').style.display = 'none';
+            stopCallTones();
             break;
 
         case "CALL_PARTICIPANTS_LIST_CHANGE":
-            console.log(event)
             callUsersListElement.innerHTML = '';
             for(let i in event.result.participants) {
                 let user = event.result.participants[i].participantVO
@@ -342,9 +340,36 @@ chatAgent.on('callEvents', function (event) {
             });
             break;
         case "CALL_PARTICIPANT_LEFT":
-            chatAgent.getCallParticipants({
-                callId
-            });
+            if(!!event.result[0].userId && event.result[0].userId != chatAgent.getCurrentUser().id) {
+                chatAgent.getCallParticipants({
+                    callId
+                });
+            } else {
+                if (event.callId != callId) {
+                    document.getElementById('caller-modal').style.display = 'none';
+                    document.getElementById('callee-modal').style.display = 'none';
+                    document.getElementById('container').classList.remove('blur');
+                    stopCallTones();
+                } else {
+                    callState.callStarted = false;
+                    callState.callStartedElsewhere = false;
+                    callState.callRequested = false;
+                    callId = null;
+
+                    removeParticipantsElements();
+                    document.getElementById('call-receive-id').innerText = '';
+                    document.getElementById('call-div').innerHTML = '';
+
+                    callInterval && clearInterval(callInterval);
+                    document.getElementById('call-div').innerHTML = '';
+
+                    document.getElementById('caller-modal').style.display = 'none';
+                    document.getElementById('callee-modal').style.display = 'none';
+                    document.getElementById('container').classList.remove('blur');
+
+                    stopCallTones();
+                }
+            }
             break;
         case "CALL_PARTICIPANT_MUTE":
             addParticipantMute(event.result[0].userId);
@@ -358,6 +383,7 @@ chatAgent.on('callEvents', function (event) {
             break;
 
         case 'CALL_ERROR':
+            handleCallErrorEvents(event)
             // document.getElementById('call-socket-status').innerText = event.errorMessage;
             stopCallTones();
             break;
@@ -369,6 +395,19 @@ chatAgent.on('callEvents', function (event) {
             break;
     }
 });
+
+function handleCallErrorEvents(event) {
+    switch (event.code) {
+        case 12000:
+        case 12400:
+        case 12401:
+        case 12402:
+        case 12403:
+        case 12404:
+            alert("[call-full][handleCallErrorEvents] " + event.message)
+            break;
+    }
+}
 
 chatAgent.on("callStreamEvents", function (event) {
     // console.log(event)
@@ -811,7 +850,8 @@ document.getElementById('toggle-screen-share').addEventListener('click', (event)
 document.getElementById('start-screen-share').addEventListener('click', (event) => {
     event.preventDefault();
     chatAgent.startScreenShare({
-        callId: callId
+        callId: callId,
+        quality: 3
     });
 });
 document.getElementById('stop-screen-share').addEventListener('click', (event) => {
@@ -874,7 +914,16 @@ document.getElementById("startGroupCall").addEventListener("click", function (ev
 
         //params.invitees = userNames;
     //} else {
+
+   /* chatAgent.deviceManager.grantUserMediaDevicesPermissions({video, audio: true, closeStream: true}, result => {
+        if (result.hasError) {
+            console.log("[call-full] can not start call because user didn't provide sufficient device permissions");
+            alert("[call-full] can not start call because user didn't provide sufficient device permissions")
+            return
+        }*/
         chatAgent.startGroupCall(params);
+    //});
+
     //}
 })
 
@@ -894,40 +943,64 @@ document.getElementById("terminateGroupCall").addEventListener("click", function
 
 document.getElementById("startCall").addEventListener("click", function (event) {
     event.preventDefault();
-    event.stopPropagation();
+    // event.stopPropagation();
     var video = document.getElementById("startCallVideoCheckMark").checked;
     var mute = document.getElementById("startCallMuteCheckMark").checked;
 
     let partnerUsername = document.getElementById('call-p2p-participant-text').value;
     let threadId = document.getElementById('call-p2p-thread').value;
 
+    // console.log("here", partnerUsername)
+
     if (partnerUsername) {
-        chatAgent.createThread({
-            "invitees": [
-                //{"id": partnerUsername, "idType": "TO_BE_USER_USERNAME"}
-                {"id": partnerUsername, "idType": "TO_BE_USER_USERNAME"}
-            ]
-        }, function (result) {
+        // chatAgent.getAvailableDevices()
+        // return;
+
+ /*       chatAgent.deviceManager.grantUserMediaDevicesPermissions({video, audio: !mute, closeStream: true}, result => {
             if(result.hasError) {
-                console.log(result);
-                return;
-            }
+                console.log("[call-full] can not start call because user didn't provide sufficient device permissions");
+                alert("[call-full] can not start call because user didn't provide sufficient device permissions")
+                return
+            }*/
 
-            let newThreadId = result.result.thread.id;
-            // chatAgent.getThreadParticipants({
-            //     threadId: newThreadId
-            // }, function (res) {
-            //     console.log("[call-full][getThreadParticipants]", newThreadId, res);
+/*            chatAgent.createThread({
+                "invitees": [
+                    //{"id": partnerUsername, "idType": "TO_BE_USER_USERNAME"}
+                    {"id": partnerUsername, "idType": "TO_BE_USER_USERNAME"}// "TO_BE_USER_USERNAME"} chatAgent.inviteeIdTypes.TO_BE_USER_USERNAME
+                ]
+            }, function (result) {
+                if(result.hasError) {
+                    console.log(result);
+                    return;
+                }
+
+                let newThreadId = result.result.thread.id;
+                */
+
+                // chatAgent.getThreadParticipants({
+                //     threadId: newThreadId
+                // }, function (res) {
+                //     console.log("[call-full][getThreadParticipants]", newThreadId, res);
 
 
-                chatAgent.startCall({threadId: newThreadId, type: (video ? 'video' : 'voice'), mute: mute});
+                chatAgent.startCall({
+                    //threadId: newThreadId,
+                    "invitees": [
+                        //{"id": partnerUsername, "idType": "TO_BE_USER_USERNAME"}
+                        {"id": partnerUsername, "idType": "TO_BE_USER_USERNAME"}// "TO_BE_USER_USERNAME"} chatAgent.inviteeIdTypes.TO_BE_USER_USERNAME
+                    ],
+                    type: (video ? 'video' : 'voice'),
+                    mute: mute});
                 callRequestStateModifier('Calling')
                 callState.callRequested = true;
                 waitForPartnerToAcceptCall()
 
 
-            //})
-        });
+                //})
+            //});
+        //});
+
+
 
         /*chatAgent.startCall({
              //threadId: newThreadId,
@@ -996,15 +1069,23 @@ document.getElementById('accept-call').addEventListener('click', () => {
     var video = document.getElementById("accept-call-video-check-mark").checked;
     var mute = document.getElementById("accept-call-mute-check-mark").checked;
 
-    chatAgent.acceptCall({
-        callId: callId,
-        video: video,
-        mute: mute,
-        cameraPaused: false
-    }, function (result) {
-        document.getElementById('caller-modal').style.display = 'none';
-        document.getElementById('container').classList.remove('blur');
-    });
+    // chatAgent.deviceManager.grantUserMediaDevicesPermissions({video, audio: !mute, closeStream: true}, result => {
+    //     if (result.hasError) {
+    //         console.log("[call-full] can not start call because user didn't provide sufficient device permissions");
+    //         alert("[call-full] can not start call because user didn't provide sufficient device permissions")
+    //         return
+    //     }
+
+        chatAgent.acceptCall({
+            callId: callId,
+            video: video,
+            mute: mute,
+            cameraPaused: false
+        }, function (result) {
+            document.getElementById('caller-modal').style.display = 'none';
+            document.getElementById('container').classList.remove('blur');
+        });
+    // })
 
     stopCallTones();
 });
@@ -1032,7 +1113,9 @@ document.getElementById("joinTheCall").addEventListener("click", function (event
     var video = document.getElementById("joinCallVideoCheckMark").checked;
     var mute = document.getElementById("joinCallMuteCheckMark").checked;
 
-    callId = cId;
+    callId = +cId;
+
+    console.log("[call-full] joinTheCall:: ", {callId}, +callId);
 
     chatAgent.acceptCall({
         callId: callId,

@@ -20,6 +20,8 @@ const stickersList = [
     , "https://s6.uupload.ir/files/tongue-out-teasing_kuy2.gif"
     , "https://s6.uupload.ir/files/kittens_atln.gif"
 ];
+
+
 const textStickersList = [
     'سلام به همه', 'درود بر شما', 'سلام عمو',
     'ایول', 'مرسی', 'دمت گرم',
@@ -86,6 +88,30 @@ let chatAgent = new PodChat({
     }
 });
 
+/*setInterval(function () {
+    chatAgent.reconnect();
+}, 20000)*/
+
+const chatStickersList = [
+    {
+        url: "https://s6.uupload.ir/files/positive_fp8z.gif",
+        name: chatAgent.callStickerTypes.LIKE
+    },
+    {
+        url: "https://s6.uupload.ir/files/cool-beefy_q8ta.gif",
+        name: chatAgent.callStickerTypes.POWER
+    },
+    {
+        url: "https://s6.uupload.ir/files/sad_9l0a.gif",
+        name: chatAgent.callStickerTypes.CRY
+    },
+    {
+        url: "https://s6.uupload.ir/files/bored_9wug.gif",
+        name: chatAgent.callStickerTypes.BORED
+    },
+
+];
+
 window.chatAgent = chatAgent;
 
 auth({
@@ -104,7 +130,6 @@ var callState = {
     callStartedElsewhere: false,
 };
 var participantIsOnline = false;
-
 
 /*
 * Main Chat Ready Listener
@@ -188,6 +213,10 @@ chatAgent.on('callEvents', function (event) {
                     callDivs[i].container.innerHTML +=  "<button id='closeFullScreenSharing' >Close</button>"
                 }
             }
+            break;
+
+        case 'CALL_STICKER':
+            console.log(event.result.stickerCode)
             break;
 
         case 'POOR_VIDEO_CONNECTION':
@@ -1312,7 +1341,38 @@ var sendTextSticker = function() {
         }
     })
 };
+
 var textSticker = document.getElementsByClassName("text-sticker")
 for (var i = 0; i < textSticker.length; i++) {
     textSticker[i].addEventListener('click', sendTextSticker, false);
 }
+
+
+/**
+ * Chat server based stickers
+ */
+/*
+let chatStickersContainer = document.getElementById("chatStickers");
+
+for(let sticky of chatStickersList){
+    let element = document.createElement('img');
+    element.setAttribute('src', sticky.url);
+    element.setAttribute("class", 'chat-sticker');
+    element.setAttribute("name-key", sticky.name);
+    element.style.width = '40px'
+    element.style.height = '40px'
+    chatStickersContainer.append(element);
+}
+chatStickersContainer.append(breakLine);
+
+let chatStickerElements = document.getElementsByClassName("chat-sticker")
+for (var i = 0; i < chatStickerElements.length; i++) {
+    chatStickerElements[i].addEventListener('click', sendCallSticker, false);
+}
+
+function sendCallSticker() {
+    let item = this.getAttribute("name-key");
+
+    chatAgent.sendCallSticker({sticker: item})
+}
+*/

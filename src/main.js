@@ -1,5 +1,5 @@
 import './index.html'
-import {auth, signOut} from "podauth";
+import {auth, signOut, retry} from "podauth";
 import PodChat from 'podchat-browser';
 
 import Config from './scripts/Config';
@@ -119,6 +119,7 @@ auth({
     scope: "social:write",
     secure: window.location.href.indexOf('https') > -1,
     redirectUri: Config[Config.env].redirectUrl,//Config.REDIRECT_URL,//(process.env.NODE_ENV == 'production'? Config.REDIRECT_URL : Config.REDIRECT_URL_LOCAL) ,
+    retryTimeout: 3000,
     onNewToken: token => {
         chatAgent.setToken(token);
     }

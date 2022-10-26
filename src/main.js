@@ -321,6 +321,7 @@ chatAgent.on('callEvents', function (event) {
             break;
 
         case 'CALL_ENDED':
+            document.getElementById("microphoneProblemBtn")?.remove();
             if(event.callId != callId) {
                 document.getElementById('caller-modal').style.display = 'none';
                 document.getElementById('callee-modal').style.display = 'none';
@@ -331,6 +332,7 @@ chatAgent.on('callEvents', function (event) {
                 callState.callStartedElsewhere = false;
                 callState.callRequested = false;
                 callId = null;
+                newCallId = null;
 
                 removeParticipantsElements();
                 document.getElementById('call-receive-id').innerText = '';
@@ -434,17 +436,41 @@ function handleCallErrorEvents(event) {
         case 12402:
         case 12403:
         case 12404:
-            alert("[call-full][handleCallErrorEvents] " + event.message)
+            alert("[call-full][handleCallErrorEvents] " + event.message);
             break;
+        case 12407:
+            showAudioProblemIcon();
     }
 }
 
+function showAudioProblemIcon(){
+    if(document.getElementById("microphoneProblemBtn") || !callId) {
+        return;
+    }
+
+    let btn = document.createElement('a');
+    btn.innerText = "Your microphone doesn't work properly, click here to regrant permission.";
+    btn.href = '#';
+    btn.setAttribute("id", 'microphoneProblemBtn');
+    btn.setAttribute("style", "color: red;")
+    btn.addEventListener("click", function (event) {
+        event.preventDefault();
+
+        chatAgent.deviceManager.reGrantMediaStreams({audio:true}).then(result => {
+            document.getElementById("microphoneProblemBtn").remove();
+        })
+    });
+
+    document.getElementById('threadForm').appendChild(btn);
+}
+
 chatAgent.on("callStreamEvents", function (event) {
-    // console.log(event)
+     //console.log(event)
 
     switch (event.type) {
         case 'USER_SPEAKING':
-            showVoiceIndicator(event)
+            showVoiceIndicator(event);
+            showVoiceState(event);
             break;
     }
 
@@ -553,6 +579,28 @@ function showVoiceIndicator(data){
         //document.getElementById("callParticipantWrapper-" + event.metadata.userId).appendChild(p);
     } else {
         el.style.height = `${(data.audioLevel * 10) }%`;
+    }
+}
+
+function showVoiceState(event){
+    if(document.querySelector('#participant-item-' + event.userId)){
+        let  el = document.querySelector('#participant-item-' + event.userId);
+        let voiceState;
+        if(!document.getElementById('participant-voice-state-' + event.userId)) {
+            voiceState = document.createElement("div");
+            voiceState.setAttribute("id", 'participant-voice-state-' + event.userId);
+            el.appendChild(voiceState);
+        } else {
+            voiceState = document.getElementById('participant-voice-state-' + event.userId);
+        }
+
+        if(event.isNoise) {
+            voiceState.innerText = "VoiceState: Noise"
+        } else if(event.isMute) {
+            voiceState.innerText = "VoiceState: Muted"
+        } else {
+            voiceState.innerText = "VoiceState: Speaking"
+        }
     }
 }
 
@@ -1107,7 +1155,7 @@ document.getElementById('accept-call').addEventListener('click', () => {
     //     }
 
         chatAgent.acceptCall({
-            callId: callId,
+            callId: newCallId ? newCallId : callId,
             video: video,
             mute: mute,
             cameraPaused: false

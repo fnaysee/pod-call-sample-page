@@ -140,6 +140,10 @@ chatAgent.on("chatReady", function () {
     document.getElementById('chat-user').innerText = chatAgent.getCurrentUser().name;
 });
 
+chatAgent.on("sdkConnectivityState", function (event) {
+    console.log("sdkConnectivityState::", {event})
+})
+
 /**
  * Listen to Error Messages
  */

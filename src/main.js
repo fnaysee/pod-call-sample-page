@@ -32,6 +32,7 @@ const textStickersList = [
 ];
 
 var callInterval, callStartTime, callId, newCallId, reconnectInterval, reconnectTime,
+    latestCallRequestId, currentCallId,
     callerTone = new Audio('./callerTone.ogg'),
     calleeTone = new Audio('./calleeTone.ogg');
 
@@ -200,6 +201,7 @@ chatAgent.on("chatState", function (chatState) {
 })*/
 
 var callDivs;
+const poorConnections = {};
 /**
  * Listen to Call Events
  */
@@ -246,18 +248,73 @@ chatAgent.on('callEvents', function (event) {
             if(document.getElementById('poorconnection-' + event.metadata.elementId))
                 document.getElementById('poorconnection-' + event.metadata.elementId).remove();
             break;
+        case 'POOR_CONNECTION':
+            if(!poorConnections[event.metadata.userId])
+                poorConnections[event.metadata.userId] = [];
+
+            if(poorConnections[event.metadata.userId].indexOf(event.metadata.media) === -1)
+                poorConnections[event.metadata.userId].push(event.metadata.media);
+
+            let p2 = document.querySelector('#poorconnectionnew-' + event.metadata.userId);
+            if(!p2) {
+                //document.getElementById("call-div").appendChild(p);
+                // document.getElementById("call-div").appendChild(p);
+                p2 = document.createElement('p');
+
+                p2.setAttribute("id",  'poorconnectionnew-' + event.metadata.userId);
+                p2.classList.add("poor-connection-new");
+                let  el = document.querySelector('#participant-item-' +  event.metadata.userId);
+                if(el)
+                    el.appendChild(p2);
+                // if(callDivs[event.metadata.userId]) {
+                    // callDivs[event.metadata.userId].container.appendChild(p)
+                // }
+                //document.getElementById("callParticipantWrapper-" + event.metadata.userId).appendChild(p);
+            }
+
+            p2.innerText = `Poor: ${poorConnections[event.metadata.userId].join(',')} Connection(s)`;
+
+            /*
+            if(document.querySelector('#participant-item-' + event.userId)){
+        let  el = document.querySelector('#participant-item-' + event.userId);
+        let voiceState;
+        if(!document.getElementById('participant-voice-state-' + event.userId)) {
+            voiceState = document.createElement("div");
+            voiceState.setAttribute("id", 'participant-voice-state-' + event.userId);
+            el.appendChild(voiceState);
+        } else {
+            voiceState = document.getElementById('participant-voice-state-' + event.userId);
+        }
+
+        if(event.isNoise) {
+            voiceState.innerText = "VoiceState: Noise"
+        } else if(event.isMute) {
+            voiceState.innerText = "VoiceState: Muted"
+        } else {
+            voiceState.innerText = "VoiceState: Speaking"
+        }
+    }
+
+             */
+
+            break;
+        case 'POOR_CONNECTION_RESOLVED':
+            if(document.getElementById('poorconnectionnew-' + event.metadata.userId))
+                document.getElementById('poorconnectionnew-' + event.metadata.userId).remove();
+            break;
         case 'RECEIVE_CALL': //code 73, 91
             /* if(callState.callStarted || callState.callStartedElsewhere) {
                 return;
             } */
             if(event.result.callId) {
-                if(!callId)
-                    callId = event.result.callId;
-                else
-                    newCallId = event.result.callId;
+                // if(!callId)
+                //     callId = event.result.callId;
+                // else
+                //     newCallId = event.result.callId;
+                latestCallRequestId = event.result.callId;
             }
 
-            console.log({callId, newCallId})
+            console.log({currentCallId, latestCallRequestId});
 /*
             document.getElementById('call-receive-id').innerText = event.result.callId;
             document.getElementById('call-div').innerHTML = '';
@@ -276,7 +333,7 @@ chatAgent.on('callEvents', function (event) {
             callRequestStateModifier('Ringing');
             break;
         case 'CALL_SESSION_CREATED':
-            callId = event.result.callId;
+            currentCallId = event.result.callId;
             document.getElementById('call-receive-id').innerText = event.result.callId;
             document.getElementById('call-div').innerHTML = '';
             document.getElementById('call-duration').innerText = 0;
@@ -296,14 +353,15 @@ chatAgent.on('callEvents', function (event) {
             break;
 
         case 'CALL_STARTED':
+            currentCallId = event.result.callId;
             document.getElementById("call-participants-list-container").classList.add("visible")
 
             chatAgent.getCallParticipants({
-                callId
+                callId: currentCallId
             });
 
             if(wantsToJoinAGroupCall) {
-                callId = document.getElementById("groupCallId").value;
+                currentCallId = document.getElementById("groupCallId").value;
             }
             callState.callStarted = true;
 
@@ -326,7 +384,7 @@ chatAgent.on('callEvents', function (event) {
 
         case 'CALL_ENDED':
             document.getElementById("microphoneProblemBtn")?.remove();
-            if(event.callId != callId) {
+            if(event.callId != currentCallId) {
                 document.getElementById('caller-modal').style.display = 'none';
                 document.getElementById('callee-modal').style.display = 'none';
                 document.getElementById('container').classList.remove('blur');
@@ -335,7 +393,7 @@ chatAgent.on('callEvents', function (event) {
                 callState.callStarted = false;
                 callState.callStartedElsewhere = false;
                 callState.callRequested = false;
-                callId = null;
+                currentCallId = null;
                 newCallId = null;
 
                 removeParticipantsElements();
@@ -372,16 +430,16 @@ chatAgent.on('callEvents', function (event) {
             break;
         case "CALL_PARTICIPANT_JOINED":
             chatAgent.getCallParticipants({
-                callId
+                callId: currentCallId
             });
             break;
         case "CALL_PARTICIPANT_LEFT":
             if(!!event.result[0].userId && event.result[0].userId != chatAgent.getCurrentUser().id) {
                 chatAgent.getCallParticipants({
-                    callId
+                    callId: currentCallId
                 });
             } else {
-                if (event.callId != callId) {
+                if (event.callId != currentCallId) {
                     document.getElementById('caller-modal').style.display = 'none';
                     document.getElementById('callee-modal').style.display = 'none';
                     document.getElementById('container').classList.remove('blur');
@@ -390,7 +448,7 @@ chatAgent.on('callEvents', function (event) {
                     callState.callStarted = false;
                     callState.callStartedElsewhere = false;
                     callState.callRequested = false;
-                    callId = null;
+                    currentCallId = null;
 
                     removeParticipantsElements();
                     document.getElementById('call-receive-id').innerText = '';
@@ -448,7 +506,7 @@ function handleCallErrorEvents(event) {
 }
 
 function showAudioProblemIcon(){
-    if(document.getElementById("microphoneProblemBtn") || !callId) {
+    if(document.getElementById("microphoneProblemBtn") || !currentCallId) {
         return;
     }
 
@@ -683,9 +741,8 @@ window.addEventListener('offline', () => document.getElementById('internet-statu
 }); */
 
 document.getElementById('reject-call').addEventListener('click', () => {
-    console.log({callId, newCallId});
     var cId = newCallId ? newCallId : callId;
-    chatAgent.rejectCall({callId: cId}, function (result) {
+    chatAgent.rejectCall({callId: latestCallRequestId}, function (result) {
         document.getElementById('caller-modal').style.display = 'none';
         document.getElementById('container').classList.remove('blur');
     });
@@ -696,11 +753,11 @@ document.getElementById('reject-call').addEventListener('click', () => {
 document.getElementById('cancel-call-request').addEventListener('click', () => {
     document.getElementById('callee-modal').style.display = 'none';
     document.getElementById('container').classList.remove('blur');
-    console.log({callId, newCallId});
+    console.log({latestCallRequestId, currentCallId});
     stopCallTones();
     callState.callRequested = false;
-    var cId = newCallId ? newCallId : callId;
-    chatAgent.rejectCall({callId: cId});
+    // var cId = newCallId ? newCallId : callId;
+    chatAgent.rejectCall({callId: latestCallRequestId});
 });
 
 document.getElementById('reconnect-socket').addEventListener('click', (e) => {
@@ -775,7 +832,7 @@ window.waitForPartnerToAcceptCallInterval = null;
 var waitForPartnerToAcceptCallRetryCount = 0;
 function waitForPartnerToAcceptCall() {
     window.waitForPartnerToAcceptCallInterval = setInterval(()=> {
-        if(!callId || !callState.callRequested) {
+        if(!currentCallId || !callState.callRequested) {
             waitForPartnerToAcceptCallRetryCount = 0;
             clearInterval(window.waitForPartnerToAcceptCallInterval);
             return
@@ -803,7 +860,7 @@ document.getElementById('restart-call').addEventListener('click', () => {
 
 document.getElementById('end-call').addEventListener('click', () => {
     chatAgent.endCall({
-        callId: callId
+        callId: currentCallId
     }, (result) => {
         console.log(result);
     });
@@ -812,7 +869,7 @@ document.getElementById('end-call').addEventListener('click', () => {
 document.getElementById('start-recording-call').addEventListener('click', () => {
     console.log('Start Recording Call')
     chatAgent.startRecordingCall({
-        callId: callId
+        callId: currentCallId
     }, (result) => {
         console.log(result);
     });
@@ -820,7 +877,7 @@ document.getElementById('start-recording-call').addEventListener('click', () => 
 
 document.getElementById('stop-recording-call').addEventListener('click', () => {
     chatAgent.stopRecordingCall({
-        callId: callId
+        callId: currentCallId
     }, (result) => {
         console.log(result);
     });
@@ -869,12 +926,12 @@ document.getElementById('resume-camera').addEventListener('click', (event) => {
 });
 document.getElementById("stop-camera").addEventListener("click", function (event) {
     chatAgent.turnOffVideoCall({
-        callId: callId,
+        callId: currentCallId,
     });
 });
 document.getElementById("start-camera").addEventListener("click", function (event) {
     chatAgent.turnOnVideoCall({
-        callId: callId,
+        callId: currentCallId,
     });
 });
 document.getElementById('stop-camera-receive').addEventListener('click', function (event) {
@@ -898,7 +955,7 @@ document.getElementById('resume-mic').addEventListener('click', (event) => {
 });
 document.getElementById("stop-mic").addEventListener("click", function (event) {
     chatAgent.muteCallParticipants({
-        callId: callId,
+        callId: currentCallId,
         userIds: [
             chatAgent.getCurrentUser().id
         ]
@@ -906,7 +963,7 @@ document.getElementById("stop-mic").addEventListener("click", function (event) {
 });
 document.getElementById("start-mic").addEventListener("click", function (event) {
     chatAgent.unMuteCallParticipants({
-        callId: callId,
+        callId: currentCallId,
         userIds: [
             chatAgent.getCurrentUser().id
         ]
@@ -932,14 +989,14 @@ document.getElementById('toggle-screen-share').addEventListener('click', (event)
 document.getElementById('start-screen-share').addEventListener('click', (event) => {
     event.preventDefault();
     chatAgent.startScreenShare({
-        callId: callId,
+        callId: currentCallId,
         quality: 3
     });
 });
 document.getElementById('stop-screen-share').addEventListener('click', (event) => {
     event.preventDefault();
     chatAgent.endScreenShare({
-        callId: callId
+        callId: currentCallId
     });
 });
 
@@ -950,7 +1007,7 @@ document.getElementById("addParticipantToCall").addEventListener("click", functi
     var newUser = document.getElementById("newParticipantUserName").value;
 
     chatAgent.addCallParticipants({
-        callId,
+        callId: currentCallId,
         //coreUserids: [1111, 2222],
         //contactIds: [1111, 2222],
         usernames: [newUser] //['f.naysee']
@@ -1011,8 +1068,8 @@ document.getElementById("startGroupCall").addEventListener("click", function (ev
 
 document.getElementById("terminateGroupCall").addEventListener("click", function (event) {
    event.preventDefault();
-   if(callId) {
-       chatAgent.terminateCall({callId});
+   if(currentCallId) {
+       chatAgent.terminateCall({callId: currentCallId});
    }
 })
 
@@ -1143,7 +1200,7 @@ document.getElementById("start-custom-recording").addEventListener("click", func
 document.getElementById("stop-custom-recording").addEventListener("click", function (event) {
     event.preventDefault();
     chatAgent.startRecordingCall({
-        callId: callId,
+        callId: currentCallId,
     })
 });
 
@@ -1159,7 +1216,7 @@ document.getElementById('accept-call').addEventListener('click', () => {
     //     }
 
         chatAgent.acceptCall({
-            callId: newCallId ? newCallId : callId,
+            callId: latestCallRequestId,//newCallId ? newCallId : callId,
             video: video,
             mute: mute,
             cameraPaused: false
@@ -1176,7 +1233,7 @@ document.getElementById("get-call-participants").addEventListener("click", funct
     event.preventDefault();
 
     chatAgent.getCallParticipants({
-        callId
+        callId: currentCallId
     })
 });
 
@@ -1195,12 +1252,12 @@ document.getElementById("joinTheCall").addEventListener("click", function (event
     var video = document.getElementById("joinCallVideoCheckMark").checked;
     var mute = document.getElementById("joinCallMuteCheckMark").checked;
 
-    callId = +cId;
+    latestCallRequestId = currentCallId = +cId;
 
-    console.log("[call-full] joinTheCall:: ", {callId}, +callId);
+    console.log("[call-full] joinTheCall:: ", {currentCallId}, +currentCallId);
 
     chatAgent.acceptCall({
-        callId: callId,
+        callId: latestCallRequestId,
         video: video,
         mute: mute,
         cameraPaused: false,
@@ -1357,7 +1414,7 @@ for(let sticky of textStickersList){
 }
 
 var sendSticker = function() {
-    if(!callId) {
+    if(!currentCallId) {
         console.warn("[call-full] Start call to send stickers");
         return;
     }
@@ -1379,7 +1436,7 @@ for (var i = 0; i < imgSticker.length; i++) {
 }
 
 var sendTextSticker = function() {
-    if(!callId) {
+    if(!currentCallId) {
         console.warn("[call-full] Start video call to send text stickers");
         return;
     }

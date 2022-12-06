@@ -15,9 +15,9 @@
             padding-top: 20px;
         }
 
-        #container {
+/*        #container {
             width: 772px;
-        }
+        }*/
 
         #header {
             display: flex;
@@ -147,9 +147,9 @@
 
         #caller-modal,
         #callee-modal {
-            position: absolute;
+            position: fixed;
             min-width: 400px;
-            top: 50%;
+            top: 30%;
             left: 50%;
             transform: translate(-50%, -50%);
             background-color: #fff;
@@ -265,13 +265,30 @@
         .text-sticker:active, .text-sticker:focus {
             color: #ffffff;
         }
-        .poor-connection-new {
-            position: absolute;
-            top: -35px;
-            background: yellow;
-            padding: 2px 5px;
-            border-radius: 5px;
+        @media only screen and (max-width: 600px) {
+            body {
+                display: flex;
+                height: 100%;
+                width: 100%;
+                position: relative;
+                font-size: 12px;
+            }
+            #call-participants-list{
+                display: flex;
+                flex-direction: column;
+            }
+            .video-wrapper video{
+                max-width: 70%;
+            }
+            .screen-resize button{
+                display: block;
+            }
         }
+
+        #container {
+            max-width: 700px;
+        }
+
     </style>
 </head>
 

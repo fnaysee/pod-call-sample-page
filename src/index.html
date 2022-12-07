@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PodChat Call (Main)</title>
+    <title>PodChat Call (Sandbox)</title>
     <meta charset="utf-8">
 <!--    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">-->
     <style>
+        *, *:before, *:after {
+            box-sizing: border-box;
+        }
         html, body {
             font-family: monospace, tahoma;
             font-size: 14px;
@@ -12,7 +15,12 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            padding-top: 20px;
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            padding: 5% 0;
         }
 
 /*        #container {
@@ -52,6 +60,7 @@
 
         #callForm > fieldset {
             padding: 20px;
+            word-wrap: anywhere;
         }
 
         .btn {
@@ -295,7 +304,7 @@
 <body>
 <div id="container">
     <div id="header">
-        <h1>POD CHAT CALL (Main)</h1>
+        <h1>POD CHAT CALL (Sandbox)</h1>
 
         <a class="btn outline" href="#" id="sign-out">
             Sign out

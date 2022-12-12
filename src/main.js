@@ -514,9 +514,13 @@ function showAudioProblemIcon(){
     btn.addEventListener("click", function (event) {
         event.preventDefault();
 
-        chatAgent.deviceManager.reGrantMediaStreams({audio:true}).then(result => {
+        chatAgent.resetCallStream({userId: chatAgent.getCurrentUser().id, streamType: 'audio'}).then(()=>{
             document.getElementById("microphoneProblemBtn").remove();
         })
+
+        /* chatAgent.deviceManager.reGrantMediaStreams({audio:true}).then(result => {
+            document.getElementById("microphoneProblemBtn").remove();
+        }) */
     });
 
     document.getElementById('threadForm').appendChild(btn);

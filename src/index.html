@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PodChat Call (Local)</title>
+    <title>PodChat Call (Main)</title>
     <meta charset="utf-8">
 <!--    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">-->
     <style>
@@ -236,7 +236,7 @@
             background-color: rgba(76, 100, 162, 0.38);
         }
 
-        .sticker-box-avatar{
+        .sticker-box-avatar {
             position: absolute;
             top: 105%;
             display: flex;
@@ -250,7 +250,7 @@
             z-index: 9999;
         }
 
-        .sticker-box-avatar:before{
+        .sticker-box-avatar:before {
             content: '';
             position: absolute;
             top: -25px;
@@ -274,6 +274,84 @@
         .text-sticker:active, .text-sticker:focus {
             color: #ffffff;
         }
+
+        #threads-list, #groupThreads-list {
+            direction: ltr;
+            text-align: right;
+            border: 1px solid #ccc;
+            padding: 0;
+            margin:30px;
+            overflow-y: scroll;
+            max-height: 400px;
+        }
+
+        #threads-list li, #groupThreads-list li {
+            list-style-type: none;
+            padding: 8px;
+            border-bottom: 1px solid #ccc;
+            position: relative;
+
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            padding-top: 100px; /* Location of the box */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        /* Modal Content */
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 10px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        /* The Close Button */
+        .close {
+            color: #aaaaaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #threads-list li{
+           cursor: pointer;
+            position: relative;
+        }
+        #call-p2p-participant{
+            width: 120px;
+        }
+        .closeModal{
+            float: right;
+        }
+        .join-to-call{
+            height: 21px;
+            border: 1px solid red;
+            border-radius: 5px;
+            color: white;
+            font-size: 11px;
+            background-color: red;
+            position: absolute;
+            left: 5px;
+            bottom: -7px;
+            text-align: center;
+            padding: 1px 3px;
+        }
+
         @media only screen and (max-width: 600px) {
             body {
                 display: flex;
@@ -304,7 +382,7 @@
 <body>
 <div id="container">
     <div id="header">
-        <h1>POD CHAT CALL (Local)</h1>
+        <h1>POD CHAT CALL (Main)</h1>
 
         <a class="btn outline" href="#" id="sign-out">
             Sign out
@@ -379,14 +457,22 @@
                         name="call-p2p-participant-text"
                         id="call-p2p-participant-text"
                         class="form-input"
-                    style="min-width: 200px">
+                        style="min-width: 100px">
+                        <button class="btn" id="get-contact-id">get contacts</button>
+                        <select id="contacts-list" class="form-input">
+                        </select>
                 </div>
-
-
                 <div>
                     <label for="call-p2p-thread">Or enter a P2P Thread Id:</label>
 
                     <input type="text" name="call-p2p-thread" id="call-p2p-thread" value="" class="custom-thread-id">
+                    <button class="btn" id="get-threads-id"> get P2P threads</button>
+                    <div id="p2pThreadsModal" class="modal">
+                        <div class="modal-content">
+                            <span class="close">&times;</span>
+                            <ul id="threads-list"></ul>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -398,9 +484,11 @@
                 #call-participants-list-container {
                     display: none;
                 }
+
                 #call-participants-list-container.visible {
                     display: block;
                 }
+
                 #call-participants-list {
                     flex-flow: row;
                     flex-wrap: wrap;
@@ -418,7 +506,7 @@
             <div class="video-wrapper" id="call-div">
             </div>
 
-            <br style="clear: fix">
+            <br style="clear: fix"/>
 
             <div>
                 <input type="checkbox" id="startCallVideoCheckMark" checked="checked">
@@ -427,7 +515,7 @@
                 <label for="startCallMuteCheckMark">Mute</label>
 
                 <!--                <a class="btn green" href="#" id="start-video-call">Start Video Call</a>-->
-<!--                <a class="btn green" href="#" id="start-audio-call">Start Audio Call</a>-->
+                <!--                <a class="btn green" href="#" id="start-audio-call">Start Audio Call</a>-->
                 <button class="btn green" type="button" id="startCall">Start Call</button>
                 <button class="btn red" type="button" id="end-call">Stop Call</button>
 
@@ -440,7 +528,7 @@
                 <br>
                 <br>
                 <style>
-                    .green{
+                    .green {
                         background-color: #65c100;
                     }
                 </style>
@@ -526,7 +614,13 @@
                 <legend>Group Call</legend>
                 Enter Thread ID:
                 <input type="text" id="groupCallThreadId" placeholder="ThreadId">
-
+                <button class="btn" id="get-group-threadId"> get group threads</button>
+                <div id="groupThreadsModal" class="modal">
+                    <div class="modal-content">
+                        <span class="closeModal">&times;</span>
+                        <ul id="groupThreads-list"></ul>
+                    </div>
+                </div>
                 <br>
 
                 Or Enter At least 2 UserNames:
@@ -556,6 +650,15 @@
 
             <hr>
             <br>
+            <fieldset>
+                <legend>recall</legend>
+                Enter Call ID:
+                <input type="text" id="callId" placeholder="Call ID">
+                <br>
+                Enter username of participant:
+                <input type="text" id="usernameForRecall" placeholder="username">
+                <button id="reCall" class="btn blue" style="margin-top: 5px;">recall</button>
+            </fieldset>
             <fieldset>
                 <legend>Custom Recording</legend>
 
@@ -612,7 +715,7 @@
         </fieldset>
     </form>
     <div class="stats-box"></div>
-    <p style="text-align: center; font-size: 10px; color: #888;">Published at 1401.09.12 (podchat-browser@12.7.2-snapshot.1 - with bug fix)</p>
+    <p style="text-align: center; font-size: 10px; color: #888;">Published at 1401.10.07 (podchat-browser@12.7.2-snapshot.3)</p>
 </div>
 
 <div id="analyser"></div>

@@ -1456,8 +1456,186 @@ var textSticker = document.getElementsByClassName("text-sticker")
 for (var i = 0; i < textSticker.length; i++) {
     textSticker[i].addEventListener('click', sendTextSticker, false);
 }
+document.getElementById("get-contact-id").addEventListener('click', function (event) {
+    event.preventDefault();
+    chatAgent.getContacts({
+        count: 50,
+        offset: 0
+    }, function (result) {
+        let contactsList = document.getElementById('contacts-list');
+        let contacts = result.result.contacts;
+        for (let i in contacts) {
+            if (contacts[i].linkedUser) {
+                let option = document.createElement('option');
+                option.value = contacts[i].linkedUser.username;
+                option.text = contacts[i].linkedUser.name;
+                option.id = contacts[i].id;
+                contactsList.appendChild(option);
+            }
+        }
+    })
+})
+document.getElementById('contacts-list').addEventListener('change', function (event) {
+    event.preventDefault();
+    let contactsList = document.getElementById('contacts-list');
+    let value = contactsList.options[contactsList.selectedIndex].value;
+    let participant = document.getElementById('call-p2p-participant-text');
+    participant.value = value;
+})
+document.getElementById('get-group-threadId').addEventListener('click', function (event) {
+    event.preventDefault();
+    console.log("[call-full] Getting threads list...");
+    chatAgent.getThreads({
+        count: 50,
+        offset: 0
+    }, function (result) {
+        let threadsList = document.getElementById('threads-list');
+        let threadsResult = result.result.threads;
+        console.log({threadsResult})
+        for (let j in threadsResult) {
+            if (threadsResult[j].group === true && threadsResult[j].title) {
+                let threadItem = document.createElement('li');
+                threadItem.innerHTML = threadsResult[j].title;
+                threadItem.id = threadsResult[j].id;
+                threadsList.appendChild(threadItem);
+            }
+        }
+    })
+})
+var p2pThreadsModal = document.getElementById("p2pThreadsModal");
+var btn = document.getElementById("get-threads-id");
+var closeButton = document.getElementsByClassName("close")[0];
+btn.addEventListener('click', function (event) {
+    let threads = [];
+    let threadsList = document.getElementById('threads-list');
+    let threadInput = document.getElementById('call-p2p-thread');
+    if (threadsList.hasChildNodes()) {
+        while (threadsList.firstChild) {
+            threadsList.removeChild(threadsList.firstChild);
+        }
+        while (threads.length) {
+            threads.pop();
+        }
+    }
+    event.preventDefault();
+    console.log("[call-full] Getting threads list...");
+    chatAgent.getThreads({
+        count: 50,
+        offset: 0
+    }, function (result) {
+        threads = result.result.threads;
+        p2pThreadsModal.style.display = "block";
+        console.log({threads})
+        for (let j in threads) {
+            if (threads[j].group === false && threads[j].title) {
+                let threadItem = document.createElement('li');
+                threadItem.innerHTML = threads[j].title;
+                let id = threads[j].id;
+                threadItem.onclick = () => assignIdForCall(id);
+                threadsList.appendChild(threadItem);
+            }
+        }
+    })
 
+    function assignIdForCall(ID) {
+        p2pThreadsModal.style.display = "none";
+        threadInput.value = ID;
+    }
+})
+closeButton.addEventListener('click', function (event) {
+    event.preventDefault();
+    p2pThreadsModal.style.display = "none";
+})
 
+let groupThreadsModal = document.getElementById("groupThreadsModal");
+let getGroupThreadBtn = document.getElementById("get-group-threadId");
+let closeModalButton = document.getElementsByClassName("closeModal")[0];
+getGroupThreadBtn.addEventListener('click', function (event) {
+    event.preventDefault();
+    let threads = [];
+    let threadsList = document.getElementById('groupThreads-list');
+    let threadInput = document.getElementById('groupCallThreadId');
+    if (threadsList.hasChildNodes()) {
+        while (threadsList.firstChild) {
+            threadsList.removeChild(threadsList.firstChild);
+        }
+        while (threads.length) {
+            threads.pop();
+        }
+    }
+    console.log("[call-full] Getting threads list...");
+    chatAgent.getThreads({
+        count: 50,
+        offset: 0
+    }, function (result) {
+        threads.push(...result.result.threads);
+        console.log({threads})
+        groupThreadsModal.style.display = "block";
+        for (let j in threads) {
+            if (threads[j].group === true && threads[j].title) {
+                let threadItem = document.createElement('li');
+                threadItem.innerHTML = threads[j].title;
+                let id = threads[j].id;
+                threadItem.setAttribute("id", id);
+                threadItem.onclick = () => assignIdForCall(id);
+                threadsList.appendChild(threadItem);
+            }
+        }
+        chatAgent.getCallsToJoin({threadIds: threads.map(e => e.id)},
+            function (result) {
+                const threadsWithCall = result.result.filter(callObject => {
+                    return threads.find(c => c.id === callObject.conversationVO.id)
+                }).map(call => {
+                    call.callId = call.id;
+                    return {id: call.conversationVO.id, call};
+                });
+                joinToTheCall(threadsWithCall);
+            })
+    })
+    function joinToTheCall(threadListCall){
+        if (threads.length > 0 && threadListCall.length > 0) {
+            let groupThreads = document.getElementById("groupThreads-list").querySelectorAll("li");
+            groupThreads.forEach(item => {
+                let matchItem = threadListCall.find(call => call.id == item.id);
+                if (matchItem !== undefined) {
+                    joinToCall = document.createElement("p");
+                    joinToCall.className = 'join-to-call';
+                    joinToCall.style.display = 'block';
+                    joinToCall.innerHTML = 'پیوستن به تماس';
+                    joinToCall.onclick = ()=> joinParticipantToCall(matchItem.call.id);
+                    item.appendChild(joinToCall);
+                }
+            })
+        }
+    }
+    function joinParticipantToCall(callid){
+        chatAgent.acceptCall({
+            callId: callid,
+            cameraPaused: false,
+            joinCall: true
+        }, function (result) {
+            joinToCall.style.display = 'none';
+        });
+    }
+
+    function assignIdForCall(ID) {
+        groupThreadsModal.style.display = "none";
+        threadInput.value = ID;
+    }
+})
+
+closeModalButton.addEventListener('click', function (event) {
+    event.preventDefault();
+    groupThreadsModal.style.display = "none";
+})
+window.onclick = function (event) {
+    if (event.target == p2pThreadsModal) {
+        p2pThreadsModal.style.display = "none";
+    }
+    if (event.target == groupThreadsModal) {
+        groupThreadsModal.style.display = "none";
+    }
+}
 /**
  * Chat server based stickers
  */

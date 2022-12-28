@@ -1552,7 +1552,7 @@ let getGroupThreadBtn = document.getElementById("get-group-threadId");
 let closeModalButton = document.getElementsByClassName("closeModal")[0];
 getGroupThreadBtn.addEventListener('click', function (event) {
     event.preventDefault();
-    let threads = [];
+    let threads = [], joinToCall;
     let threadsList = document.getElementById('groupThreads-list');
     let threadInput = document.getElementById('groupCallThreadId');
     if (threadsList.hasChildNodes()) {

@@ -1022,7 +1022,7 @@ document.getElementById("startGroupCall").addEventListener("click", function (ev
         , user2 =  document.getElementById("groupCallUserName2").value
         , user3 =  document.getElementById("groupCallUserName3").value
 
-    var params = {}, userNames = []
+    var params = {}, usersList = []
     if(video)
         params.type = 'video';
     else
@@ -1032,16 +1032,16 @@ document.getElementById("startGroupCall").addEventListener("click", function (ev
         params.threadId = threadId
     } else {
         if(user1 && user1.length)  {
-            userNames.push({"id": user1, "idType": 2})
+            usersList.push({"id": user1, "idType": "TO_BE_USER_CONTACT_ID"})
         }
         if(user2 && user2.length)  {
-            userNames.push({"id": user2, "idType": 2})
+            usersList.push({"id": user2, "idType": "TO_BE_USER_CONTACT_ID"})
         }
         if(user3 && user3.length)  {
-            userNames.push({"id": user3, "idType": 2})
+            usersList.push({"id": user3, "idType": "TO_BE_USER_CONTACT_ID"})
         }
 
-        params.invitees = userNames
+        params.invitees = usersList
     }
 
 /*    if(!params.threadId ) {

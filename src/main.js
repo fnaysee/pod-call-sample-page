@@ -82,7 +82,7 @@ let chatAgent = new PodChat({
     },
     asyncLogging: {
         onFunction: true,
-        consoleLogging: true,
+        consoleLogging: false,
         onMessageReceive: false,
         onMessageSend: false,
         actualTiming: false

@@ -6,8 +6,6 @@ const merge = require('webpack-merge');
 const cfg = require("../src/scripts/config")
 const fs = require("fs");
 
-
-
 modifyIndexTemplate();
 
 function modifyIndexTemplate() {

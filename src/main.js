@@ -203,7 +203,7 @@ const poorConnections = {};
  */
 chatAgent.on('callEvents', function (event) {
     var type = event.type;
-    console.log(event);
+    // console.log(event);
 
     switch (type) {
         case 'CALL_DIVS':
@@ -540,7 +540,7 @@ chatAgent.on("callStreamEvents", function (event) {
 
 chatAgent.on("threadEvents", function (event) {
     var type = event.type;
-    console.log("[threadEvents]", event);
+    //console.log("[threadEvents]", event);
 
     switch (type) {
         case "THREAD_LAST_ACTIVITY_TIME":
@@ -586,7 +586,7 @@ var chatOnMessageEventsObject = chatAgent.on("messageEvents", function (event) {
     var type = event.type,
         message = event.result.message;
 
-    console.log("[messageEvents]", event);
+    //console.log("[messageEvents]", event);
 
     switch (type) {
         case "MESSAGE_NEW":

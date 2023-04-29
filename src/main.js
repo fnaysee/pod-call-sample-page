@@ -86,7 +86,20 @@ let chatAgent = new PodChat({
         onMessageReceive: false,
         onMessageSend: false,
         actualTiming: false
-    }
+    },
+
+
+    // protocol: "webrtc",
+    // webrtcConfig: {
+    //     baseUrl: "https://async-dev.fanapsoft.ir//webrtc/",//"https://172.16.110.26/webrtc/",//"http://localhost:3000/webrtc/",//"http://109.201.0.97/webrtc/",
+    //     configuration: {
+    //         bundlePolicy: "balanced",
+    //         iceTransportPolicy: "relay",
+    //         iceServers: [{
+    //             "urls": "turn:turnsandbox.podstream.ir:3478", "username": "mkhorrami", "credential": "mkh_123456"
+    //         }]
+    //     }
+    // },
 });
 
 /*setInterval(function () {
@@ -175,7 +188,10 @@ chatAgent.on("chatState", function (chatState) {
             reconnectTime = ~~(chatState.timeUntilReconnect / 1000);
             reconnectInterval && clearInterval(reconnectInterval);
             reconnectInterval = setInterval(() => {
-                document.getElementById('chat-connection-status').innerText = `Reconnects in ${reconnectTime} seconds ...`;
+                if(reconnectTime > 0)
+                    document.getElementById('chat-connection-status').innerText = `Reconnects in ${reconnectTime} seconds ...`;
+                else
+                    clearInterval(reconnectInterval);
                 reconnectTime--;
             }, 1000);
 
@@ -198,6 +214,10 @@ chatAgent.on("chatState", function (chatState) {
 
 var callDivs;
 const poorConnections = {};
+
+chatAgent.on('requestBlocker', function (event) {
+    console.log(event);
+});
 /**
  * Listen to Call Events
  */
@@ -1664,3 +1684,8 @@ function sendCallSticker() {
     chatAgent.sendCallSticker({sticker: item})
 }
 */
+document.getElementById('print-sdk-call-users').addEventListener('click', function (event) {
+    event.preventDefault();
+    let localCallUsers = chatAgent.getLocalCallUsers();
+    console.log({localCallUsers})
+})

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PodChat Call (Main)</title>
+    <title>PodChat Call (Local)</title>
     <meta charset="utf-8">
 <!--    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">-->
     <style>
@@ -377,12 +377,13 @@
         }
 
     </style>
+    <script src="../chatDebugUI.js" type="text/javascript"></script>
 </head>
 
 <body>
 <div id="container">
     <div id="header">
-        <h1>POD CHAT CALL (Main)</h1>
+        <h1>POD CHAT CALL (Local)</h1>
 
         <a class="btn outline" href="#" id="sign-out">
             Sign out
@@ -575,6 +576,8 @@
                 <br>
                 <br>
                 <button id="get-call-participants" class="btn">Get Participants List</button>
+
+                <button id="print-sdk-call-users" class="btn">Print SDK Call Users</button>
             </div>
 
             <br style="clear: fix">
@@ -715,7 +718,7 @@
         </fieldset>
     </form>
     <div class="stats-box"></div>
-    <p style="text-align: center; font-size: 10px; color: #888;">Published at 1402.01.15 (podchat-browser@13.x.x-snapshot.x x) Test new webrtc class)</p>
+    <p style="text-align: center; font-size: 10px; color: #888;">Published at 1402.03.06 (podchat-browser@Test webrtc)</p>
 </div>
 
 <div id="analyser"></div>

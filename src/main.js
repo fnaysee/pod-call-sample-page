@@ -89,18 +89,35 @@ let chatAgent = new PodChat({
     },
 
 
-    // protocol: "webrtc",
-    // webrtcConfig: {
-    //     baseUrl: "https://async-dev.fanapsoft.ir//webrtc/",//"https://172.16.110.26/webrtc/",//"http://localhost:3000/webrtc/",//"http://109.201.0.97/webrtc/",
-    //     configuration: {
-    //         bundlePolicy: "balanced",
-    //         iceTransportPolicy: "relay",
-    //         iceServers: [{
-    //             "urls": "turn:turnsandbox.podstream.ir:3478", "username": "mkhorrami", "credential": "mkh_123456"
-    //         }]
-    //     }
-    // },
+    protocol: "webrtc",
+    webrtcConfig: {
+        baseUrl: "msgkhatam.pod.ir", //  https://async-webrtc.pod.ir/webrtc/",// https://async-webrtc.pod.ir/webrtc/ //"https://172.16.110.26/webrtc/",//"http://localhost:3000/webrtc/",//"http://109.201.0.97/webrtc/",
+        basePath: "/webrtc/",
+        configuration: {
+            bundlePolicy: "balanced",
+            iceTransportPolicy: "relay",
+            iceServers: [{
+                "urls": "turn:turn1.podstream.ir:3478", "username": "mkhorrami", "credential": "mkh_123456"
+            }]
+        }
+    },
+
+//         protocol: "webrtc",
+//     webrtcConfig: {
+//         baseUrl: "https://async-chat.fanapsoft.ir/webrtc/",// https://async-chat.fanapsoft.ir/webrtc/ https://async-webrtc.pod.ir/webrtc/ //"https://172.16.110.26/webrtc/",//"http://localhost:3000/webrtc/",//"http://109.201.0.97/webrtc/",
+//         configuration: {
+//             bundlePolicy: "balanced",
+//             iceTransportPolicy: "relay",
+//             iceServers: [{
+//                 "urls": "turn:turnsandbox.podstream.ir:3478", "username": "mkhorrami", "credential": "mkh_123456"
+//             }]
+//         }
+//     },
 });
+
+if(window.asyncMessageDebugger) {
+    window.asyncMessageDebugger(chatAgent);
+}
 
 /*setInterval(function () {
     chatAgent.reconnect();
@@ -150,6 +167,7 @@ var participantIsOnline = false;
 * Main Chat Ready Listener
 */
 chatAgent.on("chatReady", function () {
+    console.log("Chat is ready")
     document.getElementById('chat-connection-status').innerText = 'Chat is Ready 😉';
     document.getElementById('chat-user').innerText = chatAgent.getCurrentUser().name;
 });
@@ -188,11 +206,12 @@ chatAgent.on("chatState", function (chatState) {
             reconnectTime = ~~(chatState.timeUntilReconnect / 1000);
             reconnectInterval && clearInterval(reconnectInterval);
             reconnectInterval = setInterval(() => {
-                if(reconnectTime > 0)
+                if(reconnectTime >= 0) {
                     document.getElementById('chat-connection-status').innerText = `Reconnects in ${reconnectTime} seconds ...`;
-                else
+                    reconnectTime--;
+                } else {
                     clearInterval(reconnectInterval);
-                reconnectTime--;
+                }
             }, 1000);
 
             break;
@@ -773,6 +792,7 @@ document.getElementById('cancel-call-request').addEventListener('click', () => {
     stopCallTones();
     callState.callRequested = false;
     // var cId = newCallId ? newCallId : callId;
+    let cId = latestCallRequestId ? latestCallRequestId : currentCallId;
     chatAgent.rejectCall({callId: latestCallRequestId});
 });
 
@@ -1685,3 +1705,4 @@ document.getElementById('print-sdk-call-users').addEventListener('click', functi
     let localCallUsers = chatAgent.getLocalCallUsers();
     console.log({localCallUsers})
 })
+

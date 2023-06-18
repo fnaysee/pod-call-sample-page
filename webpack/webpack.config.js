@@ -74,7 +74,7 @@ module.exports = (env) => {
         devServer: {
             https: true,
             overlay: true
-        }
+        },
     };
 
     // Builds

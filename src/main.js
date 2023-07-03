@@ -89,7 +89,7 @@ let chatAgent = new PodChat({
     },
 
 
-    //protocol: "webrtc",
+    protocol: "webrtc",
     webrtcConfig: {
         baseUrl: "msgkhatam.pod.ir", //  https://async-webrtc.pod.ir/webrtc/",// https://async-webrtc.pod.ir/webrtc/ //"https://172.16.110.26/webrtc/",//"http://localhost:3000/webrtc/",//"http://109.201.0.97/webrtc/",
         basePath: "/webrtc/",

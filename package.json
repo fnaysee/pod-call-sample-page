@@ -38,6 +38,6 @@
     },
     "dependencies": {
         "podauth": "^1.3.2",
-        "podchat-browser": "12.10.1-snapshot.0"
+        "podchat-browser": "12.10.1-snapshot.1"
     }
 }

@@ -2,7 +2,9 @@
     let mainContent;
     let watcherInterval;
     let chatSDK;
+    let messages = [];
     let messageStack = new messageStackManager();
+    let isFilter = false;
 
 
     function messageStackManager() {
@@ -23,11 +25,12 @@
 
         chatSDK.on("asyncMessageLog", function (data) {
             messageStack.push(data);
+            messages.push(data);
             insertRow(data);
         });
 
-        let styles = document.createElement("style" );
-       styles.setAttribute("type", "text/css");
+        let styles = document.createElement("style");
+        styles.setAttribute("type", "text/css");
         styles.innerText = `
         #async-debugger-modal {
             position: fixed;
@@ -60,7 +63,7 @@
             cursor: pointer;
         }
         .async-debugger-modal-content {
-            height: 100%;
+            height: 60%;
             overflow: hidden;
             overflow-y: auto;
         }
@@ -83,13 +86,38 @@
         .async-debugger-modal-content-time {
             padding-left: 8px;
         }
-
+        .async-debugger-modal-object{
+            width: 100%;
+            height: 100%;
+            background-color: #d3d0d0;
+            padding: 5px 25px 5px 5px;
+            font-size: 12px;
+        }
+        .async-debugger-modal-search-row{
+            width: 100%;
+            height:30px;
+            background-color: #d3d0d0;
+            display: flex;
+            flex-direction: row;
+            align-items: baseline;
+        }
+        .async-debugger-modal-clearAll-icon{
+            width:25px;
+            height: 25px;
+            height: 10px;
+            margin-left:5px;
+            cursor: pointer;
+        }
+        .async-debugger-modal-filter-input{
+            width: 60%;
+            margin:5px 0px;
+            padding:0px;
+        }
         `
         document.head.appendChild(styles)
     }
 
-    function showModal(){
-
+    function showModal() {
         if (!window) {
             console.error("chat debugging UI can only be run in browser")
             return
@@ -113,7 +141,7 @@
         close.innerHTML = "X";
         close.setAttribute("class", "async-debugger-modal-close")
         close.onclick = function () {
-           modal.remove();
+            modal.remove();
         };
 
         toolbar.appendChild(close);
@@ -123,8 +151,40 @@
         toolbar.appendChild(title);
         modal.appendChild(toolbar);
 
+        let searchBar = document.createElement('div');
+        searchBar.setAttribute("class", "async-debugger-modal-search-row");
+
+        let removeAll = document.createElement("div");
+        removeAll.innerText = "X";
+        removeAll.setAttribute("class", "async-debugger-modal-clearAll-icon");
+        searchBar.appendChild(removeAll);
+        modal.appendChild(searchBar);
+        removeAll.onclick = ()=>{
+            while(messages.length >0){
+                messages.pop();
+                mainContent.innerHTML = "";
+            }
+        }
+
+        let filterInput = document.createElement('input');
+        filterInput.setAttribute("class", "async-debugger-modal-filter-input");
+        filterInput.placeholder = " search by something...";
+        filterInput.addEventListener('keyup', () => {
+            if(filterInput.value){
+                isFilter = true;
+                showMessages(true, filterInput.value);
+            } else{
+                isFilter = false;
+                showMessages(false, null);
+            }
+        })
+
+
+        searchBar.appendChild(filterInput);
+
         let content = document.createElement("div");
-        content.setAttribute("class", "async-debugger-modal-content")
+        content.setAttribute("class", "async-debugger-modal-content");
+        content.setAttribute("id", "async-debugger-modal-content-id")
         mainContent = content;
         modal.appendChild(content);
 
@@ -142,18 +202,54 @@
         headers.appendChild(time);
         content.appendChild(headers);
 
+        let showObject = document.createElement("div");
+        showObject.setAttribute("class", "async-debugger-modal-object");
+        modal.appendChild(showObject);
+
+        showMessages(false, null);
         document.body.appendChild(modal);
     }
 
-    function insertRow(message) {
-        if (!mainContent) {
-            return;
+    function showMessages(isfilter, val) {
+        if (messages.length) {
+            if (isfilter) {
+                let filteredMessages = messages.filter((item, index) => {
+                    let cn = JSON.stringify(item.msg);
+                    if (cn.includes(val)) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+                for (let msg in filteredMessages) {
+                    fillTable(filteredMessages[msg]);
+                }
+            } else {
+                if (!mainContent) {
+                    return;
+                }
+                for (let message in messages) {
+                    fillTable(messages[message]);
+                }
+            }
         }
+    }
 
+    function insertRow(message) {
+        fillTable(message);
+    }
+
+    function fillTable(msg) {
+        let content = document.getElementById('async-debugger-modal-content-id');
+        if(isFilter){
+            if(content.hasChildNodes()){
+                content.innerHTML = "";
+            }
+        }
         let item = document.createElement("div");
         item.setAttribute("class", "async-debugger-modal-content-messages")
 
-        if (message.direction == "send") {
+        if ((msg.direction) === "send") {
             item.style.background = "rgba(214,252,206,0.74)";
         } else {
             item.style.background = "rgba(224,200,200,0.74)";
@@ -162,11 +258,15 @@
         let data = document.createElement("div");
         data.setAttribute("class", "async-debugger-modal-content-data")
 
-        data.innerText = JSON.stringify(message.msg)
+        data.innerText = JSON.stringify(msg.msg)
         let time = document.createElement("div");
-        time.innerText = new Date(message.time).toLocaleTimeString();
+        time.innerText = new Date(msg.time).toLocaleTimeString();
         time.setAttribute("class", "async-debugger-modal-content-time")
 
+        data.onclick = () => {
+            let el = document.querySelector(".async-debugger-modal-object");
+            el.innerText = data.innerText;
+        }
         item.appendChild(data);
         item.appendChild(time);
         mainContent.appendChild(item);

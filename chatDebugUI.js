@@ -63,7 +63,7 @@
             cursor: pointer;
         }
         .async-debugger-modal-content {
-            height: 60%;
+            height: 55%;
             overflow: hidden;
             overflow-y: auto;
         }
@@ -88,10 +88,13 @@
         }
         .async-debugger-modal-object{
             width: 100%;
-            height: 100%;
+            height: 120px;
             background-color: #d3d0d0;
             padding: 5px 25px 5px 5px;
             font-size: 12px;
+            overflow-y: scroll;
+            border-top: 1px solid #716e6e;
+            border-bottom: 1px solid #716e6e;
         }
         .async-debugger-modal-search-row{
             width: 100%;
@@ -113,6 +116,12 @@
             margin:5px 0px;
             padding:0px;
         }
+        .async-debugger-modal-object-row{
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
         `
         document.head.appendChild(styles)
     }
@@ -125,8 +134,10 @@
 
         let modal = document.createElement("div");
         modal.id = "async-debugger-modal";
-        modal.style.visibility = "visible"
+        modal.style.visibility = "visible";
 
+        let ShowLogActionsModal = document.createElement("div");
+        ShowLogActionsModal.className = "modal-window";
         // modal.prototype.hide = function () {
         //     modal.style.visibility = "hidden";
         // }
@@ -165,7 +176,6 @@
                 mainContent.innerHTML = "";
             }
         }
-
         let filterInput = document.createElement('input');
         filterInput.setAttribute("class", "async-debugger-modal-filter-input");
         filterInput.placeholder = " search by something...";
@@ -178,8 +188,6 @@
                 showMessages(false, null);
             }
         })
-
-
         searchBar.appendChild(filterInput);
 
         let content = document.createElement("div");
@@ -192,7 +200,8 @@
         headers.setAttribute("class", "async-debugger-modal-content-headers")
         let data = document.createElement("div");
         data.innerText = "Data";
-        data.setAttribute("class", "async-debugger-modal-content-data")
+        data.setAttribute("class", "async-debugger-modal-content-data");
+
 
         let time = document.createElement("div");
         time.innerText = "Time";
@@ -202,9 +211,20 @@
         headers.appendChild(time);
         content.appendChild(headers);
 
-        let showObject = document.createElement("div");
+        let showObjectRow = document.createElement('div');
+        showObjectRow.setAttribute("class", "async-debugger-modal-object-row");
+        let showObject = document.createElement('div');
         showObject.setAttribute("class", "async-debugger-modal-object");
-        modal.appendChild(showObject);
+        let ParseObject = document.createElement('div');
+        ParseObject.setAttribute("class", "async-debugger-modal-object-parse");
+        ParseObject.style.fontSize = "13px";
+        showObject.onclick = () => {
+           ParseObject.innerHTML = JSON.parse(showObject.innerHTML);
+        }
+        showObjectRow.appendChild(showObject);
+        showObjectRow.appendChild(ParseObject);
+
+        modal.appendChild(showObjectRow);
 
         showMessages(false, null);
         document.body.appendChild(modal);
@@ -265,7 +285,7 @@
 
         data.onclick = () => {
             let el = document.querySelector(".async-debugger-modal-object");
-            el.innerText = data.innerText;
+            el.innerText = JSON.stringify(data.innerText);
         }
         item.appendChild(data);
         item.appendChild(time);

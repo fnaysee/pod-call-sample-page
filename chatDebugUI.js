@@ -241,6 +241,10 @@
                         return false;
                     }
                 });
+                let content = document.getElementById('async-debugger-modal-content-id');
+                    if(content.hasChildNodes()){
+                        content.innerHTML = "";
+                    }
                 for (let msg in filteredMessages) {
                     fillTable(filteredMessages[msg]);
                 }
@@ -260,12 +264,6 @@
     }
 
     function fillTable(msg) {
-        let content = document.getElementById('async-debugger-modal-content-id');
-        if(isFilter){
-            if(content.hasChildNodes()){
-                content.innerHTML = "";
-            }
-        }
         let item = document.createElement("div");
         item.setAttribute("class", "async-debugger-modal-content-messages")
 

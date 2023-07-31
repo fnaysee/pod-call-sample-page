@@ -5,6 +5,17 @@
     let messages = [];
     let messageStack = new messageStackManager();
     let isFilter = false;
+    let newWindow;
+
+    // const response = document.getElementById('response');
+    // window.addEventListener('message', (event) => {
+    //     console.log("9999", event);
+    //     if(event) {
+    //         window.opener.background = "#ccc";
+    //         response.innerHTML = event.data;
+    //     }
+    // })
+
 
 
     function messageStackManager() {
@@ -120,8 +131,44 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            position: relative;
         }
+        .async-debugger-modal-object{
+            position: relative;
 
+        }
+        .copy-button{
+            width: 45px;
+            height: 22px;
+            position: absolute;
+            top: 5px;
+            right: 18px;
+        }
+        pre {padding: 5px; overflow-x: auto }
+    .string { color: green; }
+    .number { color: darkorange; }
+    .boolean { color: blue; }
+    .null { color: magenta; }
+    .key { color: #0e2b5a; }
+    pre {
+        display: block;
+        font-family: monospace;
+        white-space-collapse: preserve;
+        text-wrap: nowrap;
+        margin: 1em 0px;
+        padding: 5px;
+    overflow-x: auto;
+    }
+    .async-debugger-modal-object-parse{
+            border-width: thin;
+        display: block;
+        max-width: 100%;
+        outline: none;
+        text-decoration: none;
+        transition-property: box-shadow,opacity;
+        position: relative;
+        white-space: normal;
+    }
         `
         document.head.appendChild(styles)
     }
@@ -212,16 +259,88 @@
         content.appendChild(headers);
 
         let showObjectRow = document.createElement('div');
+        let copyBtn= document.createElement('button');
+        copyBtn.innerHTML = "copy";
+        copyBtn.className = "copy-button";
         showObjectRow.setAttribute("class", "async-debugger-modal-object-row");
         let showObject = document.createElement('div');
         showObject.setAttribute("class", "async-debugger-modal-object");
         let ParseObject = document.createElement('div');
+        let preParse = document.createElement("pre");
+        preParse.setAttribute("class", "html");
+        ParseObject.appendChild(preParse);
         ParseObject.setAttribute("class", "async-debugger-modal-object-parse");
         ParseObject.style.fontSize = "13px";
         showObject.onclick = () => {
-           ParseObject.innerHTML = JSON.parse(showObject.innerHTML);
+           var invoice = window.open(generateURL(), '');
+           invoice.receiptdata = showObject.innerText;
+
+            function generateURL() {
+                var blob = new Blob([`<script>document.write(window.receiptdata)<\/script>`], {type: 'text/html'});
+                return URL.createObjectURL(blob);
+            }
+           //let element = JSON.parse(showObject.innerHTML);
+           //ParseObject.appendChild(element);
+           //preParse.innerHTML = syntaxHighlight(JSON.stringify(analyse(showObject.innerText)), null, 4);
+
+                //syntaxHighlight(JSON.stringify(analyse(showObject.innerHTML)));
+              //JSON.stringify(showObject.innerHTML);
+            //ParseObject.innerHTML = syntaxHighlight(JSON.stringify(analyse(showObject.innerText)), null, 4);
+        }
+        function analyse(string) {
+            let parsed = parseTheData(string);
+            if(!parsed) {
+                return string;
+            }
+            return recursiveParse(parsed);
+        }
+        function parseTheData(string) {
+            try {
+                return JSON.parse(string);
+            } catch (error) {
+                //console.log(error);
+                return false
+            }
+        }
+        function recursiveParse(obj){
+            for(let i in obj) {
+                if(typeof obj[i] === "string" && parseTheData(obj[i])) {
+                    obj[i] = parseTheData(obj[i]);
+                    obj[i] = recursiveParse(obj[i]);
+                }
+            }
+
+            return obj;
+        }
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, function (match) {
+                var cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(showObject.innerHTML).then(() => {
+                console.log('Content copied to clipboard:', showObject.innerHTML);
+                /* Resolved - text copied to clipboard successfully */
+            },() => {
+                console.error('Failed to copy');
+                /* Rejected - text failed to copy to the clipboard */
+            });
         }
         showObjectRow.appendChild(showObject);
+        showObjectRow.appendChild(copyBtn);
         showObjectRow.appendChild(ParseObject);
 
         modal.appendChild(showObjectRow);
@@ -229,7 +348,24 @@
         showMessages(false, null);
         document.body.appendChild(modal);
     }
-
+    function showData(json){
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, function (match) {
+            var cls = 'number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'key';
+                } else {
+                    cls = 'string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'boolean';
+            } else if (/null/.test(match)) {
+                cls = 'null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
     function showMessages(isfilter, val) {
         if (messages.length) {
             if (isfilter) {
@@ -258,7 +394,6 @@
             }
         }
     }
-
     function insertRow(message) {
         fillTable(message);
     }
@@ -283,7 +418,7 @@
 
         data.onclick = () => {
             let el = document.querySelector(".async-debugger-modal-object");
-            el.innerText = JSON.stringify(data.innerText);
+            el.innerText = data.innerText;
         }
         item.appendChild(data);
         item.appendChild(time);

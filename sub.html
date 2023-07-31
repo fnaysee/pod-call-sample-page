@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sending messages</title>
+    <style>
+        pre{
+            display: block;
+            font-family: monospace;
+            white-space-collapse: preserve;
+            text-wrap: nowrap;
+            margin: 1em 0px;
+            padding: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+<p>I'm the sub page</p>
+<div>
+    <pre id="response">
+    </pre>
+</div>
+<script src="./chatDebugUI.js"></script>
+<script>
+    const response = document.getElementById('response');
+    function analyse(string) {
+        let parsed = parseTheData(string);
+        if(!parsed) {
+            return string;
+        }
+        return recursiveParse(parsed);
+    }
+    function syntaxHighlight(json) {
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, function (match) {
+            var cls = 'number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'key';
+                } else {
+                    cls = 'string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'boolean';
+            } else if (/null/.test(match)) {
+                cls = 'null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
+    function parseTheData(string) {
+        try {
+            return JSON.parse(string);
+        } catch (error) {
+            //console.log(error);
+            return false
+        }
+    }
+    function recursiveParse(obj){
+        for(let i in obj) {
+            if(typeof obj[i] === "string" && parseTheData(obj[i])) {
+                obj[i] = parseTheData(obj[i]);
+                obj[i] = recursiveParse(obj[i]);
+            }
+        }
+
+        return obj;
+    }
+    window.addEventListener('message', (event) => {
+       // console.log("9999", event);
+        if(event) {
+           let txt =  syntaxHighlight(JSON.stringify(analyse(event.data)), null, 4);
+            response.innerHTML = txt;
+        }
+    })
+</script>
+</body>
+</html>

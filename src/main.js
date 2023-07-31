@@ -82,22 +82,27 @@ let chatAgent = new PodChat({
     },
     asyncLogging: {
         onFunction: true,
-        consoleLogging: false,
+        consoleLogging: true,
         onMessageReceive: false,
         onMessageSend: false,
         actualTiming: false
     },
 
 
-    protocol: "webrtc",
+    // protocol: "websocket",//"webrtc",
+    protocol: 'websocket',
+    protocolSwitching: {
+        webrtc: 1,
+        websocket: 1
+    },
     webrtcConfig: {
-        baseUrl: "msgkhatam.pod.ir", //  https://async-webrtc.pod.ir/webrtc/",// https://async-webrtc.pod.ir/webrtc/ //"https://172.16.110.26/webrtc/",//"http://localhost:3000/webrtc/",//"http://109.201.0.97/webrtc/",
+        baseUrl: "async-webrtc.pod.ir", //  https://msgkhatam.pod.ir/webrtc/",// https://async-webrtc.pod.ir/webrtc/ //"https://172.16.110.26/webrtc/",//"http://localhost:3000/webrtc/",//"http://109.201.0.97/webrtc/",
         basePath: "/webrtc/",
         configuration: {
             bundlePolicy: "balanced",
             iceTransportPolicy: "relay",
             iceServers: [{
-                "urls": "turn:turn1.podstream.ir:3478", "username": "mkhorrami", "credential": "mkh_123456"
+                "urls": "turn:turn1-async.podstream.ir:3478", "username": "mkhorrami", "credential": "mkh_123456"
             }]
         }
     },
@@ -167,7 +172,7 @@ var participantIsOnline = false;
 * Main Chat Ready Listener
 */
 chatAgent.on("chatReady", function () {
-    console.log("Chat is ready")
+    console.log("Chat is ready ? ?")
     document.getElementById('chat-connection-status').innerText = 'Chat is Ready 😉';
     document.getElementById('chat-user').innerText = chatAgent.getCurrentUser().name;
 });
@@ -179,6 +184,7 @@ chatAgent.on("error", function (error) {
     console.log("Error ", error);
 
     if (error.code === 21) {
+        retry();
         document.getElementById('chat-connection-status').innerText = `Invalid Token!`;
     }
 });
@@ -203,6 +209,7 @@ chatAgent.on("chatState", function (chatState) {
             break;
 
         case 3:
+            console.log("chatState", 3, chatState.timeUntilReconnect)
             reconnectTime = ~~(chatState.timeUntilReconnect / 1000);
             reconnectInterval && clearInterval(reconnectInterval);
             reconnectInterval = setInterval(() => {
@@ -1498,6 +1505,10 @@ document.getElementById("get-contact-id").addEventListener('click', function (ev
         count: 50,
         offset: 0
     }, function (result) {
+        if(result.hasError) {
+            console.error("[Sample-Page] chatAgent.getContacts", {result});
+            return;
+        }
         let contactsList = document.getElementById('contacts-list');
         let contacts = result.result.contacts;
         for (let i in contacts) {
@@ -1706,3 +1717,7 @@ document.getElementById('print-sdk-call-users').addEventListener('click', functi
     console.log({localCallUsers})
 })
 
+document.getElementById("refresh-token").addEventListener("click", function (event){
+    event.preventDefault();
+    retry()
+})

@@ -7,17 +7,6 @@
     let isFilter = false;
     let newWindow;
 
-    // const response = document.getElementById('response');
-    // window.addEventListener('message', (event) => {
-    //     console.log("9999", event);
-    //     if(event) {
-    //         window.opener.background = "#ccc";
-    //         response.innerHTML = event.data;
-    //     }
-    // })
-
-
-
     function messageStackManager() {
         let msgStack = [];
 
@@ -37,7 +26,7 @@
         chatSDK.on("asyncMessageLog", function (data) {
             messageStack.push(data);
             messages.push(data);
-            insertRow(data);
+            // insertRow(data);
         });
 
         let styles = document.createElement("style");
@@ -54,6 +43,7 @@
             height: 90%;
             top: 5%;
             padding-top: 30px;
+            max-width: 600px;
         }
         .async-debugger-modal-toolbar {
             position:absolute;
@@ -272,20 +262,14 @@
         ParseObject.setAttribute("class", "async-debugger-modal-object-parse");
         ParseObject.style.fontSize = "13px";
         showObject.onclick = () => {
-           var invoice = window.open(generateURL(), '');
-           invoice.receiptdata = showObject.innerText;
 
-            function generateURL() {
-                var blob = new Blob([`<script>document.write(window.receiptdata)<\/script>`], {type: 'text/html'});
-                return URL.createObjectURL(blob);
-            }
-           //let element = JSON.parse(showObject.innerHTML);
-           //ParseObject.appendChild(element);
-           //preParse.innerHTML = syntaxHighlight(JSON.stringify(analyse(showObject.innerText)), null, 4);
+           let element = `<pre class="html">${syntaxHighlight(JSON.stringify(analyse(showObject.innerText)), null, 4)}</pre>`;
+           // ParseObject.appendChild(element);
+           // preParse.innerHTML = syntaxHighlight(JSON.stringify(analyse(showObject.innerText)), null, 4);
 
-                //syntaxHighlight(JSON.stringify(analyse(showObject.innerHTML)));
-              //JSON.stringify(showObject.innerHTML);
-            //ParseObject.innerHTML = syntaxHighlight(JSON.stringify(analyse(showObject.innerText)), null, 4);
+                // syntaxHighlight(JSON.stringify(analyse(showObject.innerHTML)));
+              // JSON.stringify(showObject.innerHTML);
+            ParseObject.innerHTML = element;
         }
         function analyse(string) {
             let parsed = parseTheData(string);

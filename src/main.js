@@ -90,7 +90,7 @@ let chatAgent = new PodChat({
 
 
     // protocol: "websocket",//"webrtc",
-    protocol: 'websocket',
+    protocol: 'webrtc',
     protocolSwitching: {
         webrtc: 1,
         websocket: 1
@@ -106,6 +106,9 @@ let chatAgent = new PodChat({
             }]
         }
     },
+    msgLogCallback: function (data) {
+        console.log("msgLogCallback", {data})
+    }
 
 //         protocol: "webrtc",
 //     webrtcConfig: {

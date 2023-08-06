@@ -106,9 +106,7 @@ let chatAgent = new PodChat({
             }]
         }
     },
-    msgLogCallback: function (data) {
-        console.log("msgLogCallback", {data})
-    }
+    msgLogCallback: (window.asyncMessageDebuggerCallback ? asyncMessageDebuggerCallback : null)
 
 //         protocol: "webrtc",
 //     webrtcConfig: {
@@ -123,9 +121,9 @@ let chatAgent = new PodChat({
 //     },
 });
 
-if(window.asyncMessageDebugger) {
-    window.asyncMessageDebugger(chatAgent);
-}
+// if(window.asyncMessageDebuggerCallback) {
+//     window.asyncMessageDebuggerCallback(chatAgent);
+// }
 
 /*setInterval(function () {
     chatAgent.reconnect();

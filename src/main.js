@@ -88,12 +88,11 @@ let chatAgent = new PodChat({
         actualTiming: false
     },
 
-
     // protocol: "websocket",//"webrtc",
-    protocol: 'webrtc',
+    protocol: 'websocket',
     protocolSwitching: {
         webrtc: 1,
-        websocket: 1
+        websocket: 2
     },
     webrtcConfig: {
         baseUrl: "async-webrtc.pod.ir", //  https://msgkhatam.pod.ir/webrtc/",// https://async-webrtc.pod.ir/webrtc/ //"https://172.16.110.26/webrtc/",//"http://localhost:3000/webrtc/",//"http://109.201.0.97/webrtc/",
@@ -161,6 +160,9 @@ auth({
         chatAgent.setToken(token);
     }
 });
+document.getElementById('sign-out').addEventListener('click', () => {
+    signOut();
+});
 
 var callState = {
     callRequested: false,
@@ -194,6 +196,7 @@ chatAgent.on("error", function (error) {
  * Listen to Chat State Changes
  */
 chatAgent.on("chatState", function (chatState) {
+    console.log({chatState})
     switch (chatState.socketState) {
         case 0:
             document.getElementById('chat-connection-status').innerText = 'Socket is Connecting ...';
@@ -925,10 +928,6 @@ document.getElementById('stop-recording-call').addEventListener('click', () => {
     }, (result) => {
         console.log(result);
     });
-});
-
-document.getElementById('sign-out').addEventListener('click', () => {
-    signOut();
 });
 
 document.getElementById('call-p2p-participant').addEventListener('change', (event) => {
@@ -1722,3 +1721,17 @@ document.getElementById("refresh-token").addEventListener("click", function (eve
     event.preventDefault();
     retry()
 })
+
+
+/* document.getElementById('tokenInputSet').addEventListener('click', function (e) {
+    e.preventDefault();
+    console.log('New Token Has been set: ', document.getElementById('tokenInput').value);
+    chatAgent.setToken(document.getElementById('tokenInput').value);
+    console.log("Getting current user...");
+    chatAgent.getThreads({}, function (result) {
+        if(!result.hasError) {
+            console.log("Successfully reconnected...")
+        }
+    })
+    console.log(chatAgent.getCurrentUser())
+}); */

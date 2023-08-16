@@ -30,7 +30,7 @@
         //     // insertRow(data);
         // });
 
-        let styles = document.createElement("style");
+        let styles = newWindow.document.createElement("style");
         styles.setAttribute("type", "text/css");
         styles.innerText = `
         #async-debugger-modal {
@@ -46,6 +46,11 @@
             max-width: 600px;
             display: none;
             flex-direction: column;
+            position: fixed;
+            width: 100%;
+            left: 0;
+            height: 100%;
+            top: 0;
         }
         #async-debugger-modal.open {
             visibility: visible;
@@ -214,7 +219,7 @@
     .async-debugger-modal-object-parse.active {
         display: block;
     }`;
-        document.head.appendChild(styles);
+        newWindow.document.head.appendChild(styles);
     }
 
     function showModal() {
@@ -223,11 +228,15 @@
             return
         }
 
-        let modal = document.createElement("div");
+        newWindow = window.open("", "myWindow","width=500,height=600");
+
+        initDebugger();
+
+        let modal = newWindow.document.createElement("div");
         modal.id = "async-debugger-modal";
         modal.classList.add('open');
 
-        let ShowLogActionsModal = document.createElement("div");
+        let ShowLogActionsModal = newWindow.document.createElement("div");
         ShowLogActionsModal.className = "modal-window";
         // modal.prototype.hide = function () {
         //     modal.style.visibility = "hidden";
@@ -235,38 +244,38 @@
         // modal.prototype.show = function () {
         //     modal.style.visibility = "visible";
         // }
-        let toolbar = document.createElement("div");
+        let toolbar = newWindow.document.createElement("div");
         toolbar.setAttribute("class", "async-debugger-modal-toolbar")
 
 
-        let close = document.createElement("div");
+        let close = newWindow.document.createElement("div");
         close.innerHTML = "X";
         close.setAttribute("class", "async-debugger-modal-close")
         close.onclick = function () {
             modal.remove();
         };
 
-        let title = document.createElement("h3");
+        let title = newWindow.document.createElement("h3");
         title.innerText = "Message debugger";
         toolbar.appendChild(title);
         toolbar.appendChild(close);
         modal.appendChild(toolbar);
 
-        let searchBar = document.createElement('div');
+        let searchBar = newWindow.document.createElement('div');
         searchBar.setAttribute("class", "async-debugger-modal-search-row");
 
-        let removeAll = document.createElement("div");
+        let removeAll = newWindow.document.createElement("div");
         removeAll.innerText = "X";
         removeAll.setAttribute("class", "async-debugger-modal-clearAll-icon");
         searchBar.appendChild(removeAll);
         modal.appendChild(searchBar);
         removeAll.onclick = ()=> {
-            let el = document.querySelector(".async-debugger-modal-object-row");
+            let el = newWindow.document.querySelector(".async-debugger-modal-object-row");
             el.classList.remove("active");
             messages = [];
             mainContent.innerHTML = "";
         }
-        let filterInput = document.createElement('input');
+        let filterInput = newWindow.document.createElement('input');
         filterInput.setAttribute("class", "async-debugger-modal-filter-input");
         filterInput.placeholder = " search by something...";
         filterInput.addEventListener('keyup', () => {
@@ -280,13 +289,13 @@
         })
         searchBar.appendChild(filterInput);
 
-        let headers = document.createElement("div");
+        let headers = newWindow.document.createElement("div");
         headers.setAttribute("class", "async-debugger-modal-content-headers")
-        let data = document.createElement("div");
+        let data = newWindow.document.createElement("div");
         data.innerText = "Data";
         data.setAttribute("class", "async-debugger-modal-content-data");
 
-        let time = document.createElement("div");
+        let time = newWindow.document.createElement("div");
         time.innerText = "Time";
         time.setAttribute("class", "async-debugger-modal-content-time")
 
@@ -294,27 +303,27 @@
         headers.appendChild(time);
         modal.appendChild(headers);
 
-        let content = document.createElement("div");
+        let content = newWindow.document.createElement("div");
         content.setAttribute("class", "async-debugger-modal-content");
         content.setAttribute("id", "async-debugger-modal-content-id")
         mainContent = content;
         modal.appendChild(content);
-        let showObjectRow = document.createElement('div');
-        let copyBtn= document.createElement('button');
+        let showObjectRow = newWindow.document.createElement('div');
+        let copyBtn= newWindow.document.createElement('button');
         copyBtn.innerHTML = "copy";
         copyBtn.className = "copy-button";
         showObjectRow.setAttribute("class", "async-debugger-modal-object-row");
-        let showObject = document.createElement('div');
+        let showObject = newWindow.document.createElement('div');
         showObject.setAttribute("class", "async-debugger-modal-object");
-        let ParseObject = document.createElement('div');
+        let ParseObject = newWindow.document.createElement('div');
         ParseObject.setAttribute("class", "async-debugger-modal-object-parse");
         ParseObject.style.fontSize = "13px";
-        let ParseObjectContainer = document.createElement('div');
+        let ParseObjectContainer = newWindow.document.createElement('div');
         ParseObjectContainer.setAttribute("class", "async-debugger-modal-object-parse-container");
         ParseObjectContainer.style.fontSize = "13px";
         ParseObject.appendChild(ParseObjectContainer)
 
-        let closeParsedEl = document.createElement("div");
+        let closeParsedEl = newWindow.document.createElement("div");
         closeParsedEl.innerHTML = "X";
         closeParsedEl.setAttribute("class", "async-debugger-modal-object-parse-close")
         closeParsedEl.onclick = function () {
@@ -322,11 +331,11 @@
         };
         ParseObject.appendChild(closeParsedEl);
         showObject.onclick = () => {
-            let pre = document.getElementsByTagName("pre");
+            let pre = newWindow.document.getElementsByTagName("pre");
             if(pre && pre.length)
                 ParseObjectContainer.removeChild(pre[0]);
 
-            let preParse = document.createElement("pre");
+            let preParse = newWindow.document.createElement("pre");
             preParse.setAttribute("class", "pre");
 
             preParse.innerHTML = syntaxHighlight(JSON.stringify(analyse(showObject.innerText), null, 4));
@@ -395,7 +404,38 @@
         modal.appendChild(ParseObject);
 
         showMessages(false, null);
-        document.body.appendChild(modal);
+
+        newWindow.document.body.appendChild(modal);
+        // document.body.appendChild(modal);
+
+        newWindow.document.onkeydown = (e) => {
+            let cel = newWindow.document.querySelector(".async-debugger-modal-content-messages.selected"),
+                modal = newWindow.document.querySelector("#async-debugger-modal.open")
+            if(!cel || !modal)
+                return;
+
+            e = e || window.event;
+            e.stopPropagation();
+            e.preventDefault();
+            if (e.keyCode === 38) {
+                let prev = selectPrevSibling(cel);
+                if(prev) {
+                    cel.classList.remove("selected");
+                    prev.click();
+                }
+            } else if (e.keyCode === 40) {
+                let next = selectNextSibling(cel);
+                if(next) {
+                    cel.classList.remove("selected");
+                    next.click();
+                }
+            }
+            // else if (e.keyCode === 37) {
+            //     console.log("left arrow pressed");
+            // } else if (e.keyCode === 39) {
+            //     console.log("right arrow pressed");
+            // }
+        };
     }
     function showData(json){
         json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -426,7 +466,7 @@
                         return false;
                     }
                 });
-                let content = document.getElementById('async-debugger-modal-content-id');
+                let content = newWindow.document.getElementById('async-debugger-modal-content-id');
                     if(content.hasChildNodes()){
                         content.innerHTML = "";
                     }
@@ -444,19 +484,20 @@
         }
     }
     function insertRow(message) {
-        fillTable(message);
+        if(newWindow)
+            fillTable(message);
     }
 
     function fillTable(msg) {
-        let item = document.createElement("div");
+        let item = newWindow.document.createElement("div");
         item.setAttribute("class", "async-debugger-modal-content-messages");
         item.setAttribute("data-itemid", msg.itemId);
 
-        let data = document.createElement("div");
+        let data = newWindow.document.createElement("div");
         data.setAttribute("class", "async-debugger-modal-content-data")
 
         data.innerText = msg.msg
-        let time = document.createElement("div");
+        let time = newWindow.document.createElement("div");
         let msgTime = new Date(msg.time);
         time.innerText = `${(('0'+msgTime.getHours()).slice(-2))}:${(('0'+msgTime.getMinutes()).slice(-2))}:${(('0'+msgTime.getSeconds()).slice(-2))}.${(('00'+msgTime.getMilliseconds()).slice(-3))}`
         time.setAttribute("class", "async-debugger-modal-content-time")
@@ -464,16 +505,16 @@
         item.appendChild(data);
         item.appendChild(time);
         item.addEventListener("click", function (event) {
-            let selectors = document.querySelectorAll(".async-debugger-modal-content-messages.selected")
+            let selectors = newWindow.document.querySelectorAll(".async-debugger-modal-content-messages.selected")
             if(selectors.length)
                 selectors.forEach(item=>{
                     item.classList.remove("selected");
                 })
             item.classList.add("selected");
             // prev.querySelector(".async-debugger-modal-content-data").click();
-            let el = document.querySelector(".async-debugger-modal-object");
+            let el = newWindow.document.querySelector(".async-debugger-modal-object");
             el.innerText = data.innerText;
-            let el2 = document.querySelector(".async-debugger-modal-object-row");
+            let el2 = newWindow.document.querySelector(".async-debugger-modal-object-row");
             el2.classList.add("active");
         });
 
@@ -487,34 +528,7 @@
             mainContent.appendChild(item);
     }
 
-    document.onkeydown = (e) => {
-        let cel = document.querySelector(".async-debugger-modal-content-messages.selected"),
-            modal = document.querySelector("#async-debugger-modal.open")
-        if(!cel || !modal)
-            return;
 
-        e = e || window.event;
-        e.stopPropagation();
-        e.preventDefault();
-        if (e.keyCode === 38) {
-            let prev = selectPrevSibling(cel);
-            if(prev) {
-                cel.classList.remove("selected");
-                prev.click();
-            }
-        } else if (e.keyCode === 40) {
-            let next = selectNextSibling(cel);
-            if(next) {
-                cel.classList.remove("selected");
-                next.click();
-            }
-        }
-        // else if (e.keyCode === 37) {
-        //     console.log("left arrow pressed");
-        // } else if (e.keyCode === 39) {
-        //     console.log("right arrow pressed");
-        // }
-    };
 
     function selectNextSibling(el){
         let nextSibling = el.nextSibling;
@@ -532,7 +546,7 @@
     }
 
 
-    initDebugger();
+
     function messageCallback(data){
         data.itemId = itemId;
         itemId++;

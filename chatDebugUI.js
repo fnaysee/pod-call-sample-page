@@ -6,7 +6,8 @@
     let messageStack = new messageStackManager();
     let isFilter = false;
     let newWindow;
-    let itemId = 0;
+    let itemId = 0
+    let comboKeys = [];
 
     function messageStackManager() {
         let msgStack = [];
@@ -43,7 +44,6 @@
             outline: 2px darkcyan solid;
             height: 90%;
             top: 5%;
-            max-width: 600px;
             display: none;
             flex-direction: column;
             position: fixed;
@@ -245,20 +245,11 @@
         //     modal.style.visibility = "visible";
         // }
         let toolbar = newWindow.document.createElement("div");
-        toolbar.setAttribute("class", "async-debugger-modal-toolbar")
-
-
-        let close = newWindow.document.createElement("div");
-        close.innerHTML = "X";
-        close.setAttribute("class", "async-debugger-modal-close")
-        close.onclick = function () {
-            modal.remove();
-        };
+        toolbar.setAttribute("class", "async-debugger-modal-toolbar");
 
         let title = newWindow.document.createElement("h3");
         title.innerText = "Message debugger";
         toolbar.appendChild(title);
-        toolbar.appendChild(close);
         modal.appendChild(toolbar);
 
         let searchBar = newWindow.document.createElement('div');
@@ -545,7 +536,24 @@
         return previousSibling;
     }
 
+    document.onkeydown = (e) => {
 
+
+        e = e || window.event;
+        e.stopPropagation();
+        e.preventDefault();
+
+        switch (e.keyCode) {
+            case 17:
+            case 18:
+            case 68:
+                comboKeys.push(1);
+                if(comboKeys.length == 3) {
+                    window.showAsyncMessageDebugger();
+                    comboKeys = [];
+                }
+        }
+    };
 
     function messageCallback(data){
         data.itemId = itemId;
